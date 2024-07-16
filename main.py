@@ -10,11 +10,11 @@ def handle_callback(callback):
     chatID = callback.message.from_user.id
     button_call = callback.data
     if button_call == 'button1':
-        photo()
+        bot.send_photo(chatID, 'https://s0.rbk.ru/v6_top_pics/media/img/5/31/756806793338315.png')
     elif button_call == 'button2':
-        gif()
+        bot.send_photo(chatID, open('nasa-black-hole-visualization-1.gif', 'rb'))
     elif button_call == 'button3':
-        doc()
+        bot.send_document(chatID, open('dfdfsdfdfsf.txt', 'rb'))
 
 @bot.message_handler(commands=['buttons'])
 def buttons(message):
