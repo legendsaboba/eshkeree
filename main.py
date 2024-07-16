@@ -1,14 +1,53 @@
 import telebot
-
+from telebot.types import ReplyKeyboardMarkup
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 token = '7431236563:AAFtcP2OSZ1MGXHuc6VgugrU-Apuejq8Pzk'
 
 bot = telebot.TeleBot(token)
 
+@bot.callback_query_handler(fync=lambda callback: True)
+def handle_callback(callback):
+    chatID = callback.message.from_user.id
+    button_call = callback.data
+    if button_call == 'button1':
+        photo()
+    elif button_call == 'button2':
+        gif()
+    elif button_call == 'button3':
+        doc()
+
+@bot.message_handler(commands=['buttons'])
+def buttons(message):
+    chatID = message.from_user.id
+    markup = InlineKeyboardMarkup()
+    button1 = InlineKeyboardButton('фото', callback_data='photo')
+    button2 = InlineKeyboardButton('гифка', callback_data='gif')
+    button3 = InlineKeyboardButton('текст', callback_data='doc')
+    markup.add(button1,button2,button3)
+    bot.send_message(chatID, 'выбор', reply_markup=markup)
+
+
+
+def listbuttons(list_buttons, row):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(*list_buttons, row_width=row)
+    return markup
+
+
+@bot.message_handler(commands=['buttons'])
+def buttons(message):
+    chatID = message.from_user.id
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add('1','2','3','4','5','6','7','8', row_width=4)
+    bot.send_message(chatID, 'эмоция сигмы', reply_markup=markup)
+
+
 @bot.message_handler(commands=['привет', 'start'])
 def send_welcome(message):
-    name = message.from_user.username
-    print(name)
-    bot.send_message(message,'привет')
+    chatid = message.from_user.id
+    list_buttons = '1','2','3'
+    markup = listbuttons(list, 3)
+    bot.send_message(message,'меню кнопок', reply_markup=markup)
 
 @bot.message_handler(fync=lambda message: True)
 def echo_message(message):
@@ -44,6 +83,12 @@ def photo(message):
 def gif(message):
     chat_id = message.from_user.id
     bot.send_photo(chat_id, open('nasa-black-hole-visualization-1.gif', 'rb'))
+
+@bot.message_handler(commands=['game'])
+def game(message):
+    bot.send_game()
+
+
 
 bot.infinity_polling()
 
