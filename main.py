@@ -43,7 +43,7 @@ def photo(message):
 @bot.message_handler(commands=['gif'])
 def gif(message):
     chat_id = message.from_user.id
-    bot.send_photo(chat_id, open('nasa-black-hole-visualization-1.gif')
+    bot.send_photo(chat_id, open('nasa-black-hole-visualization-1.gif', 'rb'))
 
 bot.infinity_polling()
 
