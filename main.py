@@ -1,15 +1,47 @@
+import requests
 import telebot
-from telebot.types import ReplyKeyboardMarkup
+from bs4 import BeautifulSoup
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv, find_dotenv
-from random import  randint
+from random import randint
 import os
+import pygame
 
 session = {}
 load_dotenv(find_dotenv())
 token = os.getenv('token')
 
-bot = telebot.TeleBot(token)
+bot = telebot.TeleBot(token, parse_mode='HTML')
+@bot.message_handler(commands=['weather'])
+def weather(message):
+    chatID = message.from_user.id
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    key = KeyboardButton(text = 'отправить геопозицию', request_location=True)
+    markup.add(key)
+    bot.send_message(chatID, 'пожалуйста отправьте геопозицию', reply_markup=markup)
+    bot.register_next_step_handler(message, weather1)
+def weather1(message):
+    chatID = message.from_user.id
+    buttons2(message)
+    lat = message.location.latitude
+    lon = message.location.longitude
+    current_weather = get_temp(lat, lon)
+    bot.send_message(chatID, f'Текущая темперптура:{current_weather}')
+
+
+
+def get_temp(lat, lon):
+    url = f'https://api.open-meteo.com/v1/forecast?latitude={lat}.52&longitude={lon}.41&current=temperature_2m,cloud_cover,wind_speed_10m&hourly=temperature_2m'
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        current_temp = str(data['current']['temperature_2m'])
+        return current_temp
+    else:
+        print(f'ошибка: {response.status_code}')
+        return 'не удалось определить погоду'
 
 @bot.message_handler(commands=['game'])
 def game(message):
@@ -23,6 +55,30 @@ def game1(message):
     else:
         bot.send_message(chatID, 'введите число и я отгадаю его')
         bot.register_next_step_handler(message, game2)
+
+@bot.message_handler(commands=['word'])
+def word(message):
+    bot.send_message(message.chat.id, 'введите слово')
+    bot.register_next_step_handler(message, get_info_word)
+
+def get_info_word(message):
+    url = f'https://ru.wiktionary.org/wiki/{message.text.lower()}'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    answer = soup.find('ol')
+    bot.send_message(message.chat.id, f'{message.text} - {answer.text}')
+
+def get_anecdot():
+    url = f'https://www.anekdot.ru/last/anekdot/'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    answer = soup.findAll('div', class_ = 'text')
+    try:
+        answer = get_anecdot()
+        bot.send_message(message.chat.id, answer[randint(0, len(answer))].text)
+    except:
+        bot.send_message(message.chat.id, 'извините я вас не понял')
+
 def game2(message):
     chatID = message.from_user.id
     try:
@@ -88,17 +144,17 @@ def listbuttons(list_buttons, row):
     return markup
 
 
-@bot.message_handler(commands=['buttons'])
-def buttons(message):
+@bot.message_handler(commands=['buttons2'])
+def buttons2(message):
     chatID = message.from_user.id
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add('1','2','3','4','5','6','7','8', row_width=4)
-    bot.send_message(chatID, 'эмоция сигмы', reply_markup=markup)
 
 
 @bot.message_handler(commands=['привет', 'start'])
 def send_welcome(message):
-    chatid = message.from_user.id
+    chatID = message.from_user.id
+    session[chatID] = {}
     list_buttons = '1','2','3'
     markup = listbuttons(list, 3)
     bot.send_message(message,'меню кнопок', reply_markup=markup)
@@ -137,10 +193,6 @@ def photo(message):
 def gif(message):
     chat_id = message.from_user.id
     bot.send_photo(chat_id, open('nasa-black-hole-visualization-1.gif', 'rb'))
-
-@bot.message_handler(commands=['game'])
-def game(message):
-    bot.send_game()
 
 
 
