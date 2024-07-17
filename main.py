@@ -1,11 +1,15 @@
 import telebot
 from telebot.types import ReplyKeyboardMarkup
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-token = '7431236563:AAFtcP2OSZ1MGXHuc6VgugrU-Apuejq8Pzk'
-
-bot = telebot.TeleBot(token)
+from dotenv import load_dotenv, find_dotenv
+from random import  randint
+import os
 
 session = {}
+load_dotenv(find_dotenv())
+token = os.getenv('token')
+
+bot = telebot.TeleBot(token)
 
 @bot.message_handler(commands=['game'])
 def game(message):
