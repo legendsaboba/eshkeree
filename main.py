@@ -5,7 +5,57 @@ token = '7431236563:AAFtcP2OSZ1MGXHuc6VgugrU-Apuejq8Pzk'
 
 bot = telebot.TeleBot(token)
 
-@bot.callback_query_handler(fync=lambda callback: True)
+session = {}
+
+@bot.message_handler(commands=['game'])
+def game(message):
+    chatID = message.from_user.id
+    bot.send_message(chatID, 'вы готовы?')
+    bot.register_next_step_handler(message, game1)
+def game1(message):
+    chatID = message.from_user.id
+    if 'не' in message.text.lower():
+        bot.send_message(chatID, 'напишите как будете готовы')
+    else:
+        bot.send_message(chatID, 'введите число и я отгадаю его')
+        bot.register_next_step_handler(message, game2)
+def game2(message):
+    chatID = message.from_user.id
+    try:
+        number = int(message.text)
+        bot.send_message(chatID, number)
+    except:
+        bot.send_message(chatID, 'надо ввести только число')
+        bot.register_next_step_handler(message, game2)
+
+@bot.message_handler(commands=['anketa'])
+def start_anketa(message):
+    chatID = message.from_user.id
+    bot.send_message(chatID, 'введите ваше имя')
+    bot.register_next_step_handler(message, anketa1)
+
+def anketa1(message):
+    chatID = message.from_user.id
+    try:
+        session[chatID]['name'] = message.text
+        bot.send_message(chatID, 'введите ваш возраст')
+        bot.register_next_step_handler(message, anketa2)
+    except:
+        bot.send_message(chatID, 'возможно вы не ввели команду /start')
+
+def anketa2(message):
+    chatID = message.from_user.id
+    if 'не' in message.text.lower():
+        bot.send_message(chatID, 'ну и ладно')
+    else:
+        try:
+            session[chatID]['age'] = int(message.text)
+        except:
+            bot.send_message(chatID, 'введите ваш возраст числом')
+            bot.register_next_step_handler(message, anketa2)
+
+
+@bot.callback_query_handler(func=lambda callback: True)
 def handle_callback(callback):
     chatID = callback.message.from_user.id
     button_call = callback.data
